@@ -6,35 +6,58 @@
   <title>Neon Defense</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0d0f1a" />
-  <link rel="icon" href="icon-192.png" sizes="192x192" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" href="assets/img/icon-192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="assets/img/icon-192.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <img src="neon_logo.png" alt="Neon Defense Logo" class="logo" />
-    <h1>Neon Defense</h1>
-  </header>
-
-  <main class="layout">
-    <section class="hud">
-      <div>Basis-HP: <span id="hp">20</span></div>
-      <div>Energie: <span id="energy">20</span></div>
-      <div>Nächste Welle: <span id="next-wave">-</span></div>
-      <div class="actions">
-        <button id="btn-new-run">Neuen Run starten</button>
-        <button id="btn-start-wave" disabled>Welle starten</button>
+  <!-- Startscreen -->
+  <div id="startscreen" class="startscreen">
+    <!-- Animated background -->
+    <div class="bg-animations">
+      <div class="neon-grid"></div>
+      <div class="floating-shapes">
+        <div class="shape shape-circle"></div>
+        <div class="shape shape-triangle"></div>
+        <div class="shape shape-square"></div>
       </div>
-    </section>
+    </div>
 
-    <section class="canvas-holder">
-      <canvas id="game" width="540" height="720"></canvas>
-    </section>
-  </main>
+    <div class="startscreen-content">
+      <div class="logo-container">
+        <img id="startscreen-logo" src="assets/img/neon_logo.png" alt="Neon Defense" class="startscreen-logo" />
+      </div>
+      <button id="btn-start-game" class="start-button" disabled>Neues Spiel starten</button>
+    </div>
+  </div>
 
-  <footer class="foot">
-    <small>HTML5 PWA • Tron/Neon-Stil • MVP</small>
-  </footer>
+  <!-- Game UI (initially hidden) -->
+  <div id="game-ui" class="game-ui" style="display: none;">
+    <header class="topbar">
+      <img src="assets/img/neon_logo.png" alt="Neon Defense Logo" class="logo" />
+      <h1>Neon Defense</h1>
+    </header>
+
+    <main class="layout">
+      <section class="hud">
+        <div>Basis-HP: <span id="hp">20</span></div>
+        <div>Energie: <span id="energy">20</span></div>
+        <div>Nächste Welle: <span id="next-wave">-</span></div>
+        <div class="actions">
+          <button id="btn-new-run">Neuen Run starten</button>
+          <button id="btn-start-wave" disabled>Welle starten</button>
+        </div>
+      </section>
+
+      <section class="canvas-holder">
+        <canvas id="game" width="540" height="720"></canvas>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <small>HTML5 PWA • Tron/Neon-Stil • MVP</small>
+    </footer>
+  </div>
 
   <script src="config.js"></script>
   <script src="game.js"></script>

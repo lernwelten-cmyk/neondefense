@@ -1,4 +1,17 @@
 /* Neon Defense - MVP Canvas + basic wiring */
+
+// Startscreen elements
+const startscreen = document.getElementById('startscreen');
+const gameUI = document.getElementById('game-ui');
+const btnStartGame = document.getElementById('btn-start-game');
+const logoElement = document.getElementById('startscreen-logo');
+const startAudio = new Audio('assets/sounds/startscreen.mp3');
+
+// Glitch effect variables
+let glitchTimer = null;
+let isGlitching = false;
+
+// Game elements
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
@@ -206,9 +219,93 @@ async function animateWave(enemies) {
   });
 }
 
+// Logo glitch effect
+function triggerLogoGlitch() {
+  if (isGlitching) return;
+
+  isGlitching = true;
+  logoElement.classList.add('glitch');
+
+  setTimeout(() => {
+    logoElement.classList.remove('glitch');
+    isGlitching = false;
+  }, 500);
+}
+
+// Schedule random glitch effects
+function scheduleGlitch() {
+  // Random interval between 8-12 seconds
+  const interval = Math.random() * 4000 + 8000;
+
+  glitchTimer = setTimeout(() => {
+    triggerLogoGlitch();
+    scheduleGlitch(); // Schedule next glitch
+  }, interval);
+}
+
+// Startscreen functionality
+function initStartscreen() {
+  // Setup audio
+  startAudio.loop = true;
+  startAudio.volume = 0.3;
+
+  // Try immediate autoplay (will likely fail due to browser policy)
+  startAudio.play().catch(() => {
+    // Autoplay blocked - enable button and wait for user interaction
+    btnStartGame.disabled = false;
+  });
+
+  // Enable button when audio is ready
+  startAudio.addEventListener('canplaythrough', () => {
+    btnStartGame.disabled = false;
+  });
+
+  // Enable button if audio fails to load
+  startAudio.addEventListener('error', () => {
+    btnStartGame.disabled = false;
+  });
+
+  // Enable audio on any user interaction
+  const enableAudioOnInteraction = () => {
+    startAudio.play().catch(e => console.log('Audio play failed:', e));
+    document.removeEventListener('click', enableAudioOnInteraction);
+    document.removeEventListener('keydown', enableAudioOnInteraction);
+    document.removeEventListener('touchstart', enableAudioOnInteraction);
+  };
+
+  document.addEventListener('click', enableAudioOnInteraction);
+  document.addEventListener('keydown', enableAudioOnInteraction);
+  document.addEventListener('touchstart', enableAudioOnInteraction);
+
+  // Load the audio
+  startAudio.load();
+
+  // Start glitch effects
+  scheduleGlitch();
+}
+
+function startGame() {
+  // Keep startscreen audio playing (remove the stop/pause code)
+
+  // Clear glitch timer
+  if (glitchTimer) {
+    clearTimeout(glitchTimer);
+    glitchTimer = null;
+  }
+
+  // Hide startscreen and show game UI
+  startscreen.style.display = 'none';
+  gameUI.style.display = 'block';
+
+  // Initialize game
+  redrawHUD();
+  drawBoard();
+}
+
+// Event listeners
+btnStartGame.addEventListener('click', startGame);
 btnNewRun.addEventListener('click', startNewRun);
 btnStartWave.addEventListener('click', startWave);
 
-// Initial render
-redrawHUD();
-drawBoard();
+// Initialize startscreen on load
+window.addEventListener('load', initStartscreen);
