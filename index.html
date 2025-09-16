@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Neon Defense</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0d0f1a" />
+  <link rel="icon" href="icon-192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <img src="neon_logo.png" alt="Neon Defense Logo" class="logo" />
+    <h1>Neon Defense</h1>
+  </header>
+
+  <main class="layout">
+    <section class="hud">
+      <div>Basis-HP: <span id="hp">20</span></div>
+      <div>Energie: <span id="energy">20</span></div>
+      <div>Nächste Welle: <span id="next-wave">-</span></div>
+      <div class="actions">
+        <button id="btn-new-run">Neuen Run starten</button>
+        <button id="btn-start-wave" disabled>Welle starten</button>
+      </div>
+    </section>
+
+    <section class="canvas-holder">
+      <canvas id="game" width="540" height="720"></canvas>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <small>HTML5 PWA • Tron/Neon-Stil • MVP</small>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(console.error);
+      });
+    }
+  </script>
+</body>
+</html>
