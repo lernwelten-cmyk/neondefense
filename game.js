@@ -432,7 +432,6 @@ function drawEnemy(e, x, y) {
 function lerp(a, b, t) { return a + (b - a) * t; }
 
 function pathAt(t) {
-  // Very simple segmented path mapping t in [0,1]
   const segments = [
     { ax: 40, ay: 60, bx: 500, by: 60 },
     { ax: 500, ay: 60, bx: 40, by: 300 },
@@ -440,9 +439,12 @@ function pathAt(t) {
     { ax: 500, ay: 300, bx: 40, by: 540 },
     { ax: 40, ay: 540, bx: 500, by: 540 },
   ];
-  const idx = Math.min(segments.length - 1, Math.floor(t * segments.length));
-  const localT = (t * segments.length) - idx;
+  // Clamp t auf 0–1
+  const clampedT = Math.max(0, Math.min(1, t));
+  const idx = Math.min(segments.length - 1, Math.floor(clampedT * segments.length));
+  const localT = (clampedT * segments.length) - idx;
   const s = segments[idx];
+  if (!s) return { x: 0, y: 0 }; // Fallback, falls undefined
   return { x: lerp(s.ax, s.bx, localT), y: lerp(s.ay, s.by, localT) };
 }
 
