@@ -1,0 +1,298 @@
+{
+  "name": "Neon Defense_New Run",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "neon/new_run",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9f8efeec-a286-4d0d-8a30-6f3d08da7474",
+      "name": "Webhook New Run",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        -128
+      ],
+      "webhookId": "bb9fb2ff-5a52-4387-8614-1a3db37816ca"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "players"
+      },
+      "id": "3df7a5c0-3d35-42fa-82ac-e52c787f656a",
+      "name": "Supabase Get Player",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        144,
+        -128
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "5oMS2BRF6UO05zkZ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.data.length}}",
+              "operation": "notEqual",
+              "value2": "0"
+            }
+          ]
+        }
+      },
+      "id": "1f969995-5550-4db1-a63a-576c7ccd8391",
+      "name": "Player Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        352,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "players",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $('Validate Input').item.json.player_name }}"
+            }
+          ]
+        }
+      },
+      "id": "8a09e1df-3258-44f9-9ba1-c8142494ca80",
+      "name": "Supabase Create Player",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -32
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "5oMS2BRF6UO05zkZ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "runs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "player_id",
+              "fieldValue": "={{ $json.player_id }}"
+            },
+            {
+              "fieldId": "session_token",
+              "fieldValue": "={{ $json.session_token }}"
+            },
+            {
+              "fieldId": "base_hp",
+              "fieldValue": "={{ $json.base_hp }}"
+            },
+            {
+              "fieldId": "energy",
+              "fieldValue": "={{ $json.energy }}"
+            },
+            {
+              "fieldId": "current_wave",
+              "fieldValue": "0"
+            },
+            {
+              "fieldId": "score",
+              "fieldValue": "0"
+            }
+          ]
+        }
+      },
+      "id": "c1541fec-8524-4530-aef6-dca209790190",
+      "name": "Supabase Create Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        -128
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "5oMS2BRF6UO05zkZ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "df776a02-1e66-4c7b-8436-858481e88f05",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    run_id: $json.id,\n    session_token: $json.session_token,\n    base_hp: $json.base_hp,\n    energy: $json.energy\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        -128
+      ],
+      "id": "23b5c371-990b-4801-9a24-6de925c8a5a2",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "function token(len=32){\n  const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';\n  let s=''; for(let i=0;i<len;i++) s+=chars[Math.floor(Math.random()*chars.length)];\n  return s;\n}\n\nconst playerId = $json.id || ($json.data && $json.data[0].id);\nreturn [{\n  json: {\n    player_id: playerId,\n    session_token: token(40),\n    base_hp: 20,\n    energy: 20\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -128
+      ],
+      "id": "502084b1-ad35-4c5e-8b93-a0114b971497",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const name = (items[0].json.player_name || '').trim();\nif (!name) {\n  return [{ json: { error: 'player_name required' }, pairedItem: { item: 0 }, error: {code:400} }];\n}\nreturn [{ json: { player_name: name } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -128
+      ],
+      "id": "28861bad-6468-4273-b310-8fa3216b8520",
+      "name": "Code2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook New Run": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Get Player": {
+      "main": [
+        [
+          {
+            "node": "Player Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Player Found?": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase Create Player",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Create Player": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Create Run": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Supabase Create Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Supabase Get Player",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "802c05fd-4f20-4bd2-a6d2-ec6a26b85f44",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "16f31c7ba15928d78bd62ef8c17a8d5b9b3ed7ea1adc0ed7923c3d827fe22e80"
+  },
+  "id": "JocyQ9vSGJbdckVj",
+  "tags": []
+}

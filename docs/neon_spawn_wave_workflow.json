@@ -1,0 +1,200 @@
+{
+  "name": "NEON - Spawn Wave",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "neon/spawn_wave",
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "Webhook_SpawnWave",
+      "name": "Webhook Spawn Wave",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const { run_id, wave } = items[0].json;\nif (!run_id) {\n  return [{ json: { error: 'run_id required' }, pairedItem: { item: 0 }, error: { code: 400 } }];\n}\nreturn [{ json: { run_id: run_id, wave: (wave || 1) } }];"
+      },
+      "id": "Function_Validate_Spawn",
+      "name": "Validate Input Spawn",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "table": "runs",
+        "id": "={{$json.run_id}}"
+      },
+      "id": "Supabase_GetRun",
+      "name": "Supabase Get Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": "SUPABASE_CREDENTIALS"
+      },
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const wave = items[0].json.wave;\nconst baseEnemies = [\n  { type: 'triangle', hp: 3, speed: 1.2 },\n  { type: 'square', hp: 6, speed: 0.8 },\n  { type: 'circle', hp: 4, speed: 1.0 }\n];\nconst count = 3 + Math.floor(wave / 2);\nconst enemies = [];\nfor (let i = 0; i < count; i++) {\n  const e = baseEnemies[i % baseEnemies.length];\n  enemies.push({\n    type: e.type,\n    hp: e.hp + wave,\n    speed: e.speed\n  });\n}\nreturn [{ json: { run_id: $json.run_id, wave, enemies } }];"
+      },
+      "id": "Function_GenerateEnemies",
+      "name": "Generate Enemies",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "table": "enemies",
+        "jsonParameters": true,
+        "columns": "run_id, wave, type, hp, speed",
+        "values": "={{$json.run_id}},{{$json.wave}},{{$item.json.enemies[$itemIndex].type}},{{$item.json.enemies[$itemIndex].hp}},{{$item.json.enemies[$itemIndex].speed}}"
+      },
+      "id": "Supabase_CreateEnemies",
+      "name": "Supabase Create Enemies",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": "SUPABASE_CREDENTIALS"
+      },
+      "position": [1000, 400]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": "runs",
+        "id": "={{$json.run_id}}",
+        "jsonParameters": true,
+        "updateFields": {
+          "current_wave": "={{$json.wave}}"
+        }
+      },
+      "id": "Supabase_UpdateRun",
+      "name": "Supabase Update Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": "SUPABASE_CREDENTIALS"
+      },
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { enemies: $json.enemies } }];"
+      },
+      "id": "Function_Response_Spawn",
+      "name": "Shape Response Spawn",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1400, 300]
+    },
+    {
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 200
+      },
+      "id": "Respond_Webhook_Spawn",
+      "name": "Respond to Webhook Spawn",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1600, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Spawn Wave": {
+      "main": [
+        [
+          {
+            "node": "Validate Input Spawn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input Spawn": {
+      "main": [
+        [
+          {
+            "node": "Supabase Get Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Get Run": {
+      "main": [
+        [
+          {
+            "node": "Generate Enemies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Enemies": {
+      "main": [
+        [
+          {
+            "node": "Supabase Create Enemies",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase Update Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Create Enemies": {
+      "main": [
+        [
+          {
+            "node": "Shape Response Spawn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Update Run": {
+      "main": [
+        [
+          {
+            "node": "Shape Response Spawn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape Response Spawn": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook Spawn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  ],
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "NeonSpawnWaveWorkflow"
+}

@@ -1,0 +1,146 @@
+{
+  "name": "Neon_Wave_Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "neon/spawn_wave",
+        "responseMode": "lastNode"
+      },
+      "id": "Webhook_SpawnWave",
+      "name": "Webhook Spawn Wave",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { run_id, wave } = items[0].json;\nif (!run_id) {\n  return [{ json: { error: \"run_id required\" }, error: { code: 400 } }];\n}\nreturn [{ json: { run_id, wave: wave || 1 } }];"
+      },
+      "id": "Validate_Input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "runs",
+        "id": "={{$json.run_id}}"
+      },
+      "id": "Supabase_GetRun",
+      "name": "Supabase Get Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [600, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIALS",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const wave = $json.wave;\nconst baseEnemies = [\n  { type: 'triangle', hp: 3, speed: 1.2 },\n  { type: 'square', hp: 6, speed: 0.8 },\n  { type: 'circle', hp: 4, speed: 1.0 }\n];\nconst count = 3 + Math.floor(wave / 2);\nconst enemies = [];\nfor (let i = 0; i < count; i++) {\n  const e = baseEnemies[i % baseEnemies.length];\n  enemies.push({\n    type: e.type,\n    hp: e.hp + wave,\n    speed: e.speed\n  });\n}\nreturn [{ json: { run_id: $json.id, wave, enemies } }];"
+      },
+      "id": "Generate_Enemies",
+      "name": "Generate Enemies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "runs",
+        "id": "={{$json.run_id}}",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "current_wave", "fieldValue": "={{$json.wave}}" },
+            { "fieldId": "energy", "fieldValue": "={{$json.energy + 5 || 25}}" }
+          ]
+        }
+      },
+      "id": "Supabase_UpdateRun",
+      "name": "Supabase Update Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1000, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIALS",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { enemies: $json.enemies } }];"
+      },
+      "id": "Shape_Response",
+      "name": "Shape Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 200
+      },
+      "id": "Respond_Webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1400, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Spawn Wave": {
+      "main": [
+        [
+          { "node": "Validate Input", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          { "node": "Supabase Get Run", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Supabase Get Run": {
+      "main": [
+        [
+          { "node": "Generate Enemies", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Generate Enemies": {
+      "main": [
+        [
+          { "node": "Supabase Update Run", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Supabase Update Run": {
+      "main": [
+        [
+          { "node": "Shape Response", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Shape Response": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

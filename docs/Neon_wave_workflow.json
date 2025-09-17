@@ -1,0 +1,272 @@
+{
+  "name": "Neon_wave_workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "neon/new_run",
+        "options": {}
+      },
+      "id": "0adb3e15-2419-4913-b5f9-0eca5787b818",
+      "name": "Webhook New Run",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "f315f4ea-6321-4ab6-88db-eacf16bec69d"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "runs",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "={{ $json.run_id }}"
+            }
+          ]
+        }
+      },
+      "id": "2c77fffa-e3ea-401e-8816-bfb8c0aaf7bb",
+      "name": "Supabase Get Player",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        560,
+        0
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "5oMS2BRF6UO05zkZ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.data.length}}",
+              "operation": "notEqual",
+              "value2": "0"
+            }
+          ]
+        }
+      },
+      "id": "bf55d2d3-fb73-4f5c-a6ac-df8365cf77e6",
+      "name": "Player Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        752,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "865ac97d-daef-4d46-8455-c3dfa7f70b02",
+      "name": "Supabase Create Player",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        976,
+        128
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "5oMS2BRF6UO05zkZ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "function token(len=32){\n  const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';\n  let s=''; for(let i=0;i<len;i++) s+=chars[Math.floor(Math.random()*chars.length)];\n  return s;\n}\n\nconst playerId = $json.id || ($json.data && $json.data[0].id);\nreturn [{\n  json: {\n    player_id: playerId,\n    session_token: token(40),\n    base_hp: 20,\n    energy: 20\n  }\n}];"
+      },
+      "id": "1532b982-9815-44b2-95b1-9e9fd1b28062",
+      "name": "Generate Token",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c5cbce90-98ca-4c64-b5f4-84b19dfc5582",
+      "name": "Supabase Create Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        0
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "5oMS2BRF6UO05zkZ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{\n  json: {\n    run_id: $json.id,\n    session_token: $json.session_token,\n    base_hp: $json.base_hp,\n    energy: $json.energy\n  }\n}];"
+      },
+      "id": "ba46601e-be0c-4d8c-9d7c-1e87343ea09b",
+      "name": "Shape Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1616,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cd6ba4a0-3f20-4c7e-af3d-3a25fbd9bc24",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1808,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { run_id, wave } = items[0].json;\n\nif (!run_id) {\n  return [{\n    json: { error: \"run_id required\" },\n    error: { code: 400 }\n  }];\n}\n\nreturn [{\n  json: {\n    run_id,\n    wave: wave || 1\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        0
+      ],
+      "id": "59f3e299-3b45-4f49-b6f5-9731a590cd45",
+      "name": "Code"
+    }
+  ],
+  "pinData": {
+    "Webhook New Run": [
+      {
+        "json": {
+          "run_id": "c2d7f50a-5f21-4b56-a55f-6d19e0e6e0af",
+          "wave": 1
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook New Run": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Get Player": {
+      "main": [
+        [
+          {
+            "node": "Player Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Player Found?": {
+      "main": [
+        [
+          {
+            "node": "Generate Token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase Create Player",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Create Player": {
+      "main": [
+        [
+          {
+            "node": "Generate Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Token": {
+      "main": [
+        [
+          {
+            "node": "Supabase Create Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Create Run": {
+      "main": [
+        [
+          {
+            "node": "Shape Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Supabase Get Player",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6f987fb2-6b47-4d83-be6b-1a39bbb0a4d1",
+  "meta": {
+    "instanceId": "16f31c7ba15928d78bd62ef8c17a8d5b9b3ed7ea1adc0ed7923c3d827fe22e80"
+  },
+  "id": "KH28owSOHsn3dfg0",
+  "tags": []
+}
