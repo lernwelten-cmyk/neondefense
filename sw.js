@@ -1,5 +1,5 @@
 // Basic Service Worker for Neon Defense
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.0.4";
 const CACHE_NAME = `neon-defense-${APP_VERSION}`;
 const ASSETS = [
   "/",

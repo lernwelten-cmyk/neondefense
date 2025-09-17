@@ -1,5 +1,44 @@
 /* Neon Defense - MVP Canvas + basic wiring */
 
+// CONFIG wird in Production über Netlify Environment Variables gesetzt.
+// Für lokales Testing kann config.js oder der Fallback genutzt werden.
+window.CONFIG = {
+  SUPABASE_URL: typeof process !== 'undefined' && process.env ? process.env.SUPABASE_URL : undefined,
+  SUPABASE_ANON_KEY: typeof process !== 'undefined' && process.env ? process.env.SUPABASE_ANON_KEY : undefined,
+  N8N_NEW_RUN_URL: typeof process !== 'undefined' && process.env ? process.env.N8N_NEW_RUN_URL : undefined,
+  N8N_SPAWN_WAVE_URL: typeof process !== 'undefined' && process.env ? process.env.N8N_SPAWN_WAVE_URL : undefined
+};
+
+// Fallback für lokales Testing
+if (!window.CONFIG || !window.CONFIG.SUPABASE_URL) {
+  console.warn("⚠️ Using fallback config.js (local only)");
+  window.CONFIG = window.CONFIG || {};
+  window.CONFIG.SUPABASE_URL = window.CONFIG.SUPABASE_URL || "http://localhost:54321";
+  window.CONFIG.SUPABASE_ANON_KEY = window.CONFIG.SUPABASE_ANON_KEY || "dummy-key";
+  window.CONFIG.N8N_NEW_RUN_URL = window.CONFIG.N8N_NEW_RUN_URL || "http://localhost:5678/webhook/neon/new_run";
+  window.CONFIG.N8N_SPAWN_WAVE_URL = window.CONFIG.N8N_SPAWN_WAVE_URL || "http://localhost:5678/webhook/neon/spawn_wave";
+
+  // Legacy compatibility
+  window.CONFIG.N8N_NEW_RUN_PROD = window.CONFIG.N8N_NEW_RUN_URL;
+  window.CONFIG.N8N_NEW_RUN_TEST = window.CONFIG.N8N_NEW_RUN_URL;
+  window.CONFIG.N8N_SPAWN_WAVE_PROD = window.CONFIG.N8N_SPAWN_WAVE_URL;
+  window.CONFIG.N8N_SPAWN_WAVE_TEST = window.CONFIG.N8N_SPAWN_WAVE_URL;
+}
+
+// BALANCING: Fallback values if config.js loading fails
+window.BALANCE = window.BALANCE || {
+  enemies: {
+    virus:    { hp: 3, speed: 0.6 },
+    spam:     { hp: 6, speed: 0.4 },
+    trojan:   { hp: 4, speed: 0.5 }
+  },
+  towers: {
+    antivirus: { damage: 1, fireRate: 400, multiplier: { virus: 2, spam: 1, trojan: 1 } },
+    firewall:  { damage: 1, fireRate: 400, multiplier: { virus: 1, spam: 2, trojan: 1 } },
+    patch:     { damage: 1, fireRate: 400, multiplier: { virus: 1, spam: 1, trojan: 2 } }
+  }
+};
+
 // Startscreen elements
 const startscreen = document.getElementById('startscreen');
 const gameUI = document.getElementById('game-ui');
@@ -262,9 +301,9 @@ async function startNewRun() {
     });
 
     // Initialize new run via backend or locally
-    if (window.CONFIG && (CONFIG.N8N_NEW_RUN_PROD || CONFIG.N8N_NEW_RUN_TEST)) {
+    if (window.CONFIG && (window.CONFIG.N8N_NEW_RUN_URL || window.CONFIG.N8N_NEW_RUN_PROD || window.CONFIG.N8N_NEW_RUN_TEST)) {
       try {
-        const webhookUrl = CONFIG.N8N_NEW_RUN_PROD || CONFIG.N8N_NEW_RUN_TEST;
+        const webhookUrl = window.CONFIG.N8N_NEW_RUN_URL || window.CONFIG.N8N_NEW_RUN_PROD || window.CONFIG.N8N_NEW_RUN_TEST;
         const res = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -337,9 +376,9 @@ async function loadWaveEnemies(waveNumber) {
   let enemies = [];
 
   // Try to load from n8n backend
-  if (window.CONFIG && (CONFIG.N8N_SPAWN_WAVE_PROD || CONFIG.N8N_SPAWN_WAVE_TEST)) {
+  if (window.CONFIG && (window.CONFIG.N8N_SPAWN_WAVE_URL || window.CONFIG.N8N_SPAWN_WAVE_PROD || window.CONFIG.N8N_SPAWN_WAVE_TEST)) {
     try {
-      const webhookUrl = CONFIG.N8N_SPAWN_WAVE_PROD || CONFIG.N8N_SPAWN_WAVE_TEST;
+      const webhookUrl = window.CONFIG.N8N_SPAWN_WAVE_URL || window.CONFIG.N8N_SPAWN_WAVE_PROD || window.CONFIG.N8N_SPAWN_WAVE_TEST;
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
