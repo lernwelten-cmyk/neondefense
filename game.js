@@ -370,12 +370,23 @@ async function loadWaveEnemies(waveNumber) {
 }
 
 function generateDummyWave(waveNumber) {
-  // Generate progressively harder waves
-  // BALANCING: Reduced speed by ~50% for better observation
+  // BALANCING: Use values from config.js for easier balancing
   const baseEnemies = [
-    { type: 'virus', hp: 2 + waveNumber, speed: 0.6 + (waveNumber * 0.05) },
-    { type: 'spam', hp: 4 + waveNumber, speed: 0.4 + (waveNumber * 0.05) },
-    { type: 'trojan', hp: 3 + waveNumber, speed: 0.5 + (waveNumber * 0.05) },
+    {
+      type: 'virus',
+      hp: window.BALANCE.enemies.virus.hp + waveNumber,
+      speed: window.BALANCE.enemies.virus.speed + (waveNumber * 0.05)
+    },
+    {
+      type: 'spam',
+      hp: window.BALANCE.enemies.spam.hp + waveNumber,
+      speed: window.BALANCE.enemies.spam.speed + (waveNumber * 0.05)
+    },
+    {
+      type: 'trojan',
+      hp: window.BALANCE.enemies.trojan.hp + waveNumber,
+      speed: window.BALANCE.enemies.trojan.speed + (waveNumber * 0.05)
+    },
   ];
 
   // Add more enemies for higher waves
@@ -571,17 +582,14 @@ function handleGameOver() {
 
 // Damage calculation system
 function calculateDamage(towerType, enemyType) {
-  const towerData = towerTypes[towerType];
-  let baseDamage = towerData.damage;
+  // BALANCING: Use values from config.js for easier balancing
+  const towerData = window.BALANCE.towers[towerType];
+  if (!towerData) return 1; // Fallback
 
-  if (towerData.strongAgainst === enemyType) {
-    // Strong against: double damage
-    return baseDamage * 2;
-  } else {
-    // Neutral: normal damage
-    // TODO: Add weak effectiveness (0.5x damage) for balancing
-    return baseDamage * 1;
-  }
+  const baseDamage = towerData.damage;
+  const multiplier = towerData.multiplier[enemyType] || 1;
+
+  return baseDamage * multiplier;
 }
 
 // Tower placement and combat system
@@ -684,10 +692,11 @@ function updateProjectiles() {
         // BALANCING: Enhanced damage visibility for combat observation
         console.log(`${projectile.towerType} → ${projectile.target.type}, Schaden: ${effectiveDamage}, Rest-HP: ${projectile.target.hp}`);
 
-        // Visual feedback for effective hits
-        if (towerTypes[projectile.towerType].strongAgainst === projectile.target.type) {
+        // BALANCING: Visual feedback for effective hits using config.js multipliers
+        const multiplier = window.BALANCE.towers[projectile.towerType]?.multiplier[projectile.target.type] || 1;
+        if (multiplier > 1) {
           // TODO: Add visual effect for critical hits (particle effects, screen shake)
-          console.log(`CRITICAL HIT! ${projectile.towerType} vs ${projectile.target.type}: ${effectiveDamage} damage`);
+          console.log(`CRITICAL HIT! ${projectile.towerType} vs ${projectile.target.type}: ${effectiveDamage} damage (${multiplier}x)`);
         }
       }
       projectiles.splice(i, 1);
