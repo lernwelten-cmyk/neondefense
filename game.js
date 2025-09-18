@@ -50,6 +50,7 @@ const state = {
   wave: 0,
   run_id: null,
   session_token: null,
+  enemies: [],
 };
 
 /** Tower slots - strategic positions along the path **/
@@ -335,21 +336,24 @@ async function startWave() {
   try {
     btnStartWave.disabled = true;
 
-    // Initialize new wave
-    currentWave.number = state.wave + 1;
+    // Increment wave counter
+    state.wave++;
+
+    // Load enemies from backend (waits until complete)
+    await loadWaveEnemies();
+
+    // Initialize new wave with loaded enemies
+    currentWave.number = state.wave;
     currentWave.isActive = true;
     currentWave.isComplete = false;
     currentWave.startTime = Date.now();
     currentWave.enemiesSpawned = 0;
     currentWave.enemiesDestroyed = 0;
     currentWave.enemiesReachedBase = 0;
-
-    // Load enemy list from backend or use dummy data
-    let enemies = await loadWaveEnemies(currentWave.number);
-    currentWave.enemies = enemies;
+    currentWave.enemies = state.enemies;
 
     // Start wave animation
-    await animateWave(enemies);
+    await animateWave(state.enemies);
 
     // Wave completed - handle end
     endWave();
@@ -361,40 +365,26 @@ async function startWave() {
   }
 }
 
-async function loadWaveEnemies(waveNumber) {
-  let enemies = [];
+async function loadWaveEnemies() {
+  try {
+    const res = await fetch(window.CONFIG.N8N_SPAWN_WAVE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        run_id: state.run_id,
+        wave: state.wave + 1
+      })
+    });
 
-  // Try to load from n8n backend
-  if (window.CONFIG && (window.CONFIG.N8N_SPAWN_WAVE_URL || window.CONFIG.N8N_SPAWN_WAVE_PROD || window.CONFIG.N8N_SPAWN_WAVE_TEST)) {
-    try {
-      const webhookUrl = window.CONFIG.N8N_SPAWN_WAVE_URL || window.CONFIG.N8N_SPAWN_WAVE_PROD || window.CONFIG.N8N_SPAWN_WAVE_TEST;
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          run_id: state.run_id,
-          wave: waveNumber,
-          player_name: 'Anonymous'
-        }),
-      });
+    const data = await res.json();
+    if (!data.enemies) throw new Error("No enemies in response");
 
-      if (response.ok) {
-        const data = await response.json();
-        enemies = data.enemies || [];
-        console.log(`Loaded ${enemies.length} enemies from backend for wave ${waveNumber}`);
-      }
-    } catch (error) {
-      console.log('Backend not available, using dummy data:', error.message);
-    }
+    state.enemies = data.enemies;
+    console.log("✅ Loaded", state.enemies.length, "enemies from backend for wave", state.wave + 1);
+  } catch (err) {
+    console.warn("⚠️ Backend not available, using dummy data:", err);
+    state.enemies = generateDummyWave(state.wave + 1);
   }
-
-  // Fallback to dummy enemies if backend failed or not configured
-  if (enemies.length === 0) {
-    enemies = generateDummyWave(waveNumber);
-    console.log(`Generated ${enemies.length} dummy enemies for wave ${waveNumber}`);
-  }
-
-  return enemies;
 }
 
 function generateDummyWave(waveNumber) {
