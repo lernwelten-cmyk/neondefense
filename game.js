@@ -478,8 +478,8 @@ function pathAt(t) {
 }
 
 async function animateWave(enemies) {
-  const start = performance.now();
-  const duration = 8000; // Increased duration for better gameplay
+  const startTime = performance.now();
+  let lastFrameTime = startTime;
 
   // Prepare enemies with position tracking
   enemies.forEach((e, i) => {
@@ -488,14 +488,17 @@ async function animateWave(enemies) {
     e.maxHP = e.hp;
     e.isDestroyed = false;
     e.reachedBase = false;
+    e.spawnDelay = i * 200; // Stagger enemy spawning by 200ms
+    e.hasSpawned = false;
   });
   currentEnemies = [...enemies];
   currentWave.enemiesSpawned = enemies.length;
 
   return new Promise(resolve => {
     function frame(now) {
-      const elapsed = now - start;
-      const t = Math.min(1, elapsed / duration);
+      const deltaTime = (now - lastFrameTime) / 1000; // Convert to seconds
+      const elapsedTotal = now - startTime; // Total elapsed since wave start
+      lastFrameTime = now;
 
       drawBoard();
 
@@ -511,21 +514,33 @@ async function animateWave(enemies) {
       });
 
       currentEnemies.forEach((e, i) => {
-        const et = Math.min(1, t * (1 + i * 0.1));
-        e.progress = et;
-        const { x, y } = pathAt(et);
+        // Check if enemy should spawn (staggered spawning)
+        if (!e.hasSpawned && elapsedTotal >= e.spawnDelay) {
+          e.hasSpawned = true;
+        }
+
+        if (e.hasSpawned && e.progress < 1) {
+          // Move enemy based on its individual speed
+          e.progress += e.speed * deltaTime * 0.1; // Scale factor for path completion
+          e.progress = Math.min(1, e.progress); // Clamp to max 1
+        }
+
+        const { x, y } = pathAt(e.progress);
         e.x = x;
         e.y = y;
 
         // Check if enemy reached base
-        if (et >= 1 && !e.reachedBase) {
+        if (e.progress >= 1 && !e.reachedBase) {
           e.reachedBase = true;
           currentWave.enemiesReachedBase++;
           state.hp -= 1; // Damage player base
           redrawHUD();
         }
 
-        drawEnemy(e, x, y);
+        // Only draw spawned enemies
+        if (e.hasSpawned) {
+          drawEnemy(e, x, y);
+        }
       });
 
       // Remove enemies that reached the base
@@ -536,7 +551,7 @@ async function animateWave(enemies) {
       updateProjectiles();
 
       // Check if wave is complete
-      if (isWaveCleared() || t >= 1) {
+      if (isWaveCleared()) {
         currentEnemies = [];
         resolve();
       } else {
