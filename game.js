@@ -5,7 +5,7 @@ window.CONFIG = {
   SUPABASE_URL: "https://aehddhwtksimtcdhxzxp.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlaGRkaHd0a3NpbXRjZGh4enhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNzA3ODgsImV4cCI6MjA3Mjc0Njc4OH0.ETDLwSLXklp6m5Vpdk1zBS7ToyVl2U6YAr4_02g24Ds",
   N8N_NEW_RUN_URL: "https://marcowille.app.n8n.cloud/webhook/neon/new_run",
-  N8N_SPAWN_WAVE_URL: "https://marcowille.app.n8n.cloud/webhook-test/neon/spawn_wave"
+  N8N_SPAWN_WAVE_URL: "https://marcowille.app.n8n.cloud/webhook/neon/spawn_wave"
 };
 
 // Legacy compatibility for existing code
