@@ -1,29 +1,18 @@
 /* Neon Defense - MVP Canvas + basic wiring */
 
-// CONFIG wird in Production über Netlify Environment Variables gesetzt.
-// Für lokales Testing kann config.js oder der Fallback genutzt werden.
+// Production Configuration - safe for client-side (ANON_KEY is public)
 window.CONFIG = {
-  SUPABASE_URL: typeof process !== 'undefined' && process.env ? process.env.SUPABASE_URL : undefined,
-  SUPABASE_ANON_KEY: typeof process !== 'undefined' && process.env ? process.env.SUPABASE_ANON_KEY : undefined,
-  N8N_NEW_RUN_URL: typeof process !== 'undefined' && process.env ? process.env.N8N_NEW_RUN_URL : undefined,
-  N8N_SPAWN_WAVE_URL: typeof process !== 'undefined' && process.env ? process.env.N8N_SPAWN_WAVE_URL : undefined
+  SUPABASE_URL: "https://aehddhwtksimtcdhxzxp.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlaGRkaHd0a3NpbXRjZGh4enhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNzA3ODgsImV4cCI6MjA3Mjc0Njc4OH0.ETDLwSLXklp6m5Vpdk1zBS7ToyVl2U6YAr4_02g24Ds",
+  N8N_NEW_RUN_URL: "https://marcowille.app.n8n.cloud/webhook/neon/new_run",
+  N8N_SPAWN_WAVE_URL: "https://marcowille.app.n8n.cloud/webhook-test/neon/spawn_wave"
 };
 
-// Fallback für lokales Testing
-if (!window.CONFIG || !window.CONFIG.SUPABASE_URL) {
-  console.warn("⚠️ Using fallback config.js (local only)");
-  window.CONFIG = window.CONFIG || {};
-  window.CONFIG.SUPABASE_URL = window.CONFIG.SUPABASE_URL || "http://localhost:54321";
-  window.CONFIG.SUPABASE_ANON_KEY = window.CONFIG.SUPABASE_ANON_KEY || "dummy-key";
-  window.CONFIG.N8N_NEW_RUN_URL = window.CONFIG.N8N_NEW_RUN_URL || "http://localhost:5678/webhook/neon/new_run";
-  window.CONFIG.N8N_SPAWN_WAVE_URL = window.CONFIG.N8N_SPAWN_WAVE_URL || "http://localhost:5678/webhook/neon/spawn_wave";
-
-  // Legacy compatibility
-  window.CONFIG.N8N_NEW_RUN_PROD = window.CONFIG.N8N_NEW_RUN_URL;
-  window.CONFIG.N8N_NEW_RUN_TEST = window.CONFIG.N8N_NEW_RUN_URL;
-  window.CONFIG.N8N_SPAWN_WAVE_PROD = window.CONFIG.N8N_SPAWN_WAVE_URL;
-  window.CONFIG.N8N_SPAWN_WAVE_TEST = window.CONFIG.N8N_SPAWN_WAVE_URL;
-}
+// Legacy compatibility for existing code
+window.CONFIG.N8N_NEW_RUN_PROD = window.CONFIG.N8N_NEW_RUN_URL;
+window.CONFIG.N8N_NEW_RUN_TEST = window.CONFIG.N8N_NEW_RUN_URL;
+window.CONFIG.N8N_SPAWN_WAVE_PROD = window.CONFIG.N8N_SPAWN_WAVE_URL;
+window.CONFIG.N8N_SPAWN_WAVE_TEST = window.CONFIG.N8N_SPAWN_WAVE_URL;
 
 // BALANCING: Fallback values if config.js loading fails
 window.BALANCE = window.BALANCE || {
